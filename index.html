@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>countnet</title>
+    <title>inventory manager</title>
 <script src="tfjs@latest.js"></script>
 <script async="" defer="" src="js/lib/store.js"></script>
 <script async="" defer="" src="main.js"></script>
@@ -36,10 +36,10 @@ input {
     text-align: center;
     margin: 0px 5%!important;
 }
-video{
-      margin: 5%;
-    width: 90%;
-        max-width: 300px;
+svg,video{
+      margin: 2.5%;
+    width: 45%;
+        max-width: 45%;
 }
 canvas{
   margin: 1.5%;
@@ -60,8 +60,10 @@ canvas{
 </head>
 <body>
 
+<div class="viewGen">
 
-<video id="video" width="420" autoplay >
+<video id="video" autoplay >
+</div>
   </video>
  <div class="row">
     <div class="col s12">
@@ -96,7 +98,19 @@ canvas{
 
 <input class="testCount" type='number' placeholder="count"/>
 
-    <a class="waves-effect waves-light btn" onclick="train()">add example</a>
+    <a class="waves-effect waves-light btn" onclick="train()" disabled>camera sample</a>
+<!-- Switch -->
+
+      <span>generate test data</span>
+  <div class="switch testDataGen">
+
+    <label>
+      off
+      <input type="checkbox">
+      <span class="lever"></span>
+      on
+    </label>
+  </div>
 
   </div>
     
@@ -128,7 +142,7 @@ var randomTcColour = function() {
 
 
 // SVG viewport
-var svg = d3.select('body')
+var svg = d3.select('.viewGen')
   .append('svg')
     .attr('width', 224)
     .attr('height', 224);

@@ -557,7 +557,7 @@ setInterval(function() {
   if(generatingTestData) {
    createTestData('',getRandomInt(1, 30))
   }
-}, 800);
+}, 2000);
 
 
 function getRandomInt(min, max) {
@@ -595,13 +595,13 @@ async function init() {
 countnet =  await loadCountNet();
 mobilenet =  await loadMobilenet();
 addData().then(function(r){
-  
+
 setInterval(function() {
   
 
 var elems = document.querySelectorAll('.materialboxed');
     var instances = M.Materialbox.init(elems, {});
-}, 1000);
+}, 2000);
    // startWebcam(document.querySelector('video'));
 })
 }
@@ -609,3 +609,15 @@ init()
 
 var tabsInstance = M.Tabs.init(document.querySelector('.tabs'), {});
   
+
+//toggle test data generation  
+document.querySelector(".testDataGen>label>input").addEventListener("click", function(e){
+if(generatingTestData){
+generatingTestData=false;
+addData()
+}else{
+
+
+generatingTestData=true;
+}
+});
