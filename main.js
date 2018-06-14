@@ -7,7 +7,6 @@ var NUM_CLASSES =2;
 var class_names = {}
 
 
-// const OUTPUT_SHAPE = [7,7,5+NUM_CLASSES+1]
 
 
 
@@ -161,8 +160,6 @@ function getVideoFrame(som){
  console.log(example, label) 
     // One-hot encode the label.
     
-   //const y = tf.tidy(() => tf.tensor2d([[label,1]]).toInt()); //
-//const y = tf.tidy(() => tf.tensor2d([[1],[1]]).toInt()); //
 const y = tf.tidy(() => tf.oneHot(tf.tensor1d([label]).toInt(), 30));
 
 
