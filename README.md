@@ -12,4 +12,4 @@ the model can count upto 30 objects
 	[1,0,0,0,0,0,0,0,0...,0] - for one object,
 	[0,1,0,0,0,0,0,0,0...,0] - for two objects etc,
 	
-training is ok but loss does not change
+training is not ok for more than two samples from dataset
