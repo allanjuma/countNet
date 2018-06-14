@@ -1,7 +1,7 @@
 # countNet
 tensorflow model for counting objects
 
-the model can count upto 10 objects
+the model can count upto 30 objects
 
 1. gets two input images of similar items, one with a single item the other with multiple
 
@@ -9,7 +9,7 @@ the model can count upto 10 objects
 
 3. countnet should output an array eg
 
-	[1,0,0,0,0,0,0,0,0,0] - for one object,
-	[0,1,0,0,0,0,0,0,0,0] - for two objects etc,
+	[1,0,0,0,0,0,0,0,0...,0] - for one object,
+	[0,1,0,0,0,0,0,0,0...,0] - for two objects etc,
 	
 training is ok but loss does not change
