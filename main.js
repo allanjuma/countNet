@@ -158,9 +158,13 @@ function getVideoFrame(som){
    * @param {number} label The label of the example. Should be an umber.
    */
  addExample(example, label) {
+ console.log(example, label) 
     // One-hot encode the label.
     
-   const y = tf.tidy(() => tf.tensor2d([[label,1]]).toInt()); //
+   //const y = tf.tidy(() => tf.tensor2d([[label,1]]).toInt()); //
+//const y = tf.tidy(() => tf.tensor2d([[1],[1]]).toInt()); //
+const y = tf.tidy(() => tf.oneHot(tf.tensor1d([label]).toInt(), 30));
+
 
     if (this.xs == null) {
       // For the first example that gets added, keep example and y so that the
@@ -309,7 +313,7 @@ cnet = tf.sequential({
       }),
       // Layer 2. The number of units of the last layer should correspond
       tf.layers.dense({
-        units: 2,
+        units: 30,
         kernelInitializer: 'varianceScaling',
         useBias: false,
         activation: 'softmax'
@@ -401,7 +405,7 @@ model = tf.sequential({
       // Layer 3. The number of units of the last layer should correspond
       // to the number of classes we want to predict.
       tf.layers.dense({
-        units: NUM_CLASSES,
+        units: 8,
         kernelInitializer: 'varianceScaling',
         useBias: false,
         activation: 'softmax'
@@ -447,18 +451,21 @@ document.querySelector('.collection').appendChild(htmlToElement('<li style="padd
     '</li>'));
   
 
+  new Promise(function (resolve, reject) {
+
+
 var singleCanv = document.createElement('canvas');
 var singleCtx = singleCanv.getContext("2d");
 var manyCanv = document.createElement('canvas');
 var manyCtx = manyCanv.getContext("2d");
-
+var cnt=reqs[i].count;
 
   singleCanv.width = 224;
   singleCanv.height =  224;
   manyCanv.width = 224;
   manyCanv.height =  224;
   
-var sImage = new Image();
+      var sImage = new Image();
 sImage.onload = function() {
  
 singleCtx.drawImage(sImage, 0, 0, 224, 224);
@@ -477,9 +484,8 @@ manyCtx.drawImage(mImage, 0, 0, 224, 224);
     // console.log(img.data())
 
 var product = multiplyLayer.apply([mobilenet.predict(singleImg), mobilenet.predict(manyImg)]);
-console.log(mobilenet.predict(singleImg),product);
-    modelDataset.addExample(product, parseInt(reqs[i].count));
-
+resolve({product:product,count:parseInt(cnt)})
+  
 
 };
 mImage.src = reqs[i].mImg;
@@ -487,6 +493,13 @@ mImage.src = reqs[i].mImg;
 
 };
 sImage.src = reqs[i].sImg;
+
+    }).then(function(e){
+modelDataset.addExample(e.product, e.count);
+
+
+    })
+  
 
 //console.log(manyCtx,reqs[i].mImg)
 
