@@ -55,6 +55,7 @@ canvas{
 
     <!-- Compiled and minified JavaScript -->
     <script  type="text/javascript" src="js/lib/materialize.min.js"></script>
+    
 <script type="text/javascript" src="js/lib/d3.js"></script>
 
 </head>
@@ -62,6 +63,7 @@ canvas{
 
 <div class="viewGen">
 
+      <div style="text-align:center;padding:10px;">dataset generetor</div>
 <video id="video" autoplay >
 </div>
   </video>
@@ -83,7 +85,7 @@ canvas{
     </label>
   </div>
 
-    <a class="waves-effect waves-light btn modelBtn" onclick="train()">start</a>
+    <a class="waves-effect waves-light btn modelBtn" onclick="train().then(function(e){console.log(e)})">start</a>
 
 <div class='modelStats'></div>
 
@@ -92,6 +94,8 @@ canvas{
     <div id="test2" class="col s12">
 
   <div class="dataAdd">
+  
+      <div style="padding:10px">tries to count the number of objects in frame 2 that look like the one in frame 1</div>
   <canvas class="singleCanvas" onclick="getVideoFrame('single')" width="224" height="224"></canvas>
 
 <canvas class="manyCanvas" onclick="getVideoFrame('many')" width="224" height="224"></canvas>
@@ -100,9 +104,9 @@ canvas{
 
     <a class="waves-effect waves-light btn" onclick="train()" disabled>camera sample</a>
 <!-- Switch -->
-
-      <span>generate test data</span>
-  <div class="switch testDataGen">
+</br>
+      <span>auto train</span>
+  <div class="switch autoTrain">
 
     <label>
       off
@@ -119,107 +123,6 @@ canvas{
   </ul>
   </div>
   </div>
-
-    <script>
-
-
-// Scale for radius
-var xr = d3.scale
-        .linear()
-        .domain([10, 30])
-        .range([20, 50]);
-
-// Scale for random position
-var randomPosition = function(d) {
-    return Math.random() * 200;
-}
-
-
-var tcColours = ['#FDBB30', '#EE3124', '#EC008C', '#F47521', '#7AC143', '#00B0DD'];
-var randomTcColour = function() {
-  return Math.floor(Math.random() * tcColours.length);
-};
-
-
-// SVG viewport
-var svg = d3.select('.viewGen')
-  .append('svg')
-    .attr('width', 224)
-    .attr('height', 224);
-
-async function update(shape,count) {
-  svg.selectAll("*").remove();
-    var baseCircle = svg.selectAll('circle');
-    var baseRect = svg.selectAll('rect');
-
-// create data
-var data = [];
-for (var i=0; i < count; i++) {
- data.push(i);
-}
-console.log(count,data)
-    // Bind data
-    baseCircle = baseCircle.data(data);
-    baseRect = baseRect.data(data);
-
-   function setRect(){
-    
-    // set the rects
-    baseRect.transition()
-            .duration(200)
-            .attr('width', xr)
-            .attr('height', xr)
-            .attr('x', randomPosition)
-            .attr('y', randomPosition)
-            .style('fill', tcColours[randomTcColour()]);
-
-    baseRect.enter()
-            .append('rect')
-            .attr('width', xr)
-            .attr('height', xr)
-            .attr('x', randomPosition)
-            .attr('y', randomPosition)
-            .style('fill', tcColours[randomTcColour()]);
-
-
-     
-   }
-  
-  function setCirc(){
-    // set the circles
-    baseCircle.transition()
-            .duration(250)
-            .attr('r', xr)
-            .attr('cx', randomPosition)
-            .attr('cy', randomPosition)
-            .attr('fill', "none")
-            .attr("stroke-width", 4)
-            .style('stroke', tcColours[randomTcColour()]);
- 
-    baseCircle.enter()
-            .append('circle')
-            .attr('r', xr)
-            .attr('cx', randomPosition)
-            .attr('cy', randomPosition)
-            .attr('fill', "none")
-            .attr("stroke-width", 4)
-            .style('stroke', tcColours[randomTcColour()]);
-  }
-  if(shape==1){
- setRect()   
-  }else if(shape==2){
-setCirc()
-  }else{
-setRect()
-setCirc()
-  }
-return true;
-
-}
-
-
-
-    </script>
 
 </body>
 </html>

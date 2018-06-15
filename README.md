@@ -12,4 +12,4 @@ the model can count upto 30 objects
 	[1,0,0,0,0,0,0,0,0...,0] - for one object,
 	[0,1,0,0,0,0,0,0,0...,0] - for two objects etc,
 	
-training is not ok for more than two samples from dataset
+training is ok from dataset but the model may be too small to learn anything useful. better model maybe?

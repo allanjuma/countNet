@@ -1,3 +1,201 @@
+
+var svg;
+   // Bind data
+   
+   function setRect(data,baseRect){
+    baseRect = baseRect.data(data);
+
+    // set the rects
+    baseRect.transition()
+            .duration(200)
+            .attr('width', xr)
+            .attr('height', xr)
+            .attr('x', randomPosition)
+            .attr('y', randomPosition)
+            .style('fill', tcColours[randomTcColour()]);
+
+    baseRect.enter()
+            .append('rect')
+            .attr('width', xr)
+            .attr('height', xr)
+            .attr('x', randomPosition)
+            .attr('y', randomPosition)
+            .style('fill', tcColours[randomTcColour()]);
+
+
+     
+   }
+  
+  function setCirc(data, baseCircle){
+  	 baseCircle = baseCircle.data(data);
+    
+    // set the circles
+    baseCircle.transition()
+            .duration(250)
+            .attr('r', xr)
+            .attr('cx', randomPosition)
+            .attr('cy', randomPosition)
+            .attr('fill', "none")
+            .attr("stroke-width", 4)
+            .style('stroke', tcColours[randomTcColour()]);
+ 
+    baseCircle.enter()
+            .append('circle')
+            .attr('r', xr)
+            .attr('cx', randomPosition)
+            .attr('cy', randomPosition)
+            .attr('fill', "none")
+            .attr("stroke-width", 4)
+            .style('stroke', tcColours[randomTcColour()]);
+  }
+
+async function update(shape,count) {
+  svg.selectAll("*").remove();
+    
+
+// create data
+var data = [];
+for (var i=0; i < count; i++) {
+ data.push(i);
+}
+// create random data
+var ranData = [];
+for (var i=0; i < getRandomInt(1, 30); i++) {
+ ranData.push(i);
+}
+console.log(count,data);
+
+  
+
+  if(count>1){
+  
+  if(shape==1){
+
+setRect(data,svg.selectAll('rect')) 
+setCirc(ranData,svg.selectAll('circle'))
+  }	else{
+  	
+setRect(ranData,svg.selectAll('rect')) 
+setCirc(data,svg.selectAll('circle'))
+  }
+  } else{
+
+if(shape==1){
+ setRect(data,svg.selectAll('rect'))   
+  }else if(shape==2){
+setCirc(data,svg.selectAll('circle'))
+  }
+  }
+  
+return true;
+
+}
+
+function datasetManager(){
+// Scale for radius
+xr = d3.scale
+        .linear()
+        .domain([10, 30])
+        .range([30, 50]);
+
+// Scale for random position
+randomPosition = function(d) {
+    return Math.random() * 200;
+}
+
+
+tcColours = ['#FDBB30', '#EE3124', '#EC008C', '#F47521', '#7AC143', '#00B0DD'];
+randomTcColour = function() {
+  return Math.floor(Math.random() * tcColours.length);
+};
+
+
+// SVG viewport
+svg = d3.select('.viewGen')
+  .append('svg')
+    .attr('width', 224)
+    .attr('height', 224);
+
+}
+
+
+function initDBstore(sn) {
+	  var indexedDBOpenRequest;
+
+    indexedDBOpenRequest = indexedDB.open(sn);
+  // This top-level error handler will be invoked any time there's an IndexedDB-related error.
+  indexedDBOpenRequest.onerror = function(error) {
+      
+    console.error('IndexedDB error:', error);
+     // indexedDB.createObjectStore(STORE_NAME);
+  };
+
+  // This should only execute if there's a need to create a new database for the given IDB_VERSION.
+  indexedDBOpenRequest.onupgradeneeded = function() {
+  //  this.result.createObjectStore(STORE_NAME, {keyPath: 'url'});
+      if(sn=='offana'){
+          this.result.createObjectStore(sn, {keyPath: 'url'});
+      }else{
+       
+    this.result.createObjectStore(sn);   
+      }
+  };
+
+  // This will execute each time the database is opened.
+  indexedDBOpenRequest.onsuccess = function() {
+      if(sn=='data'){idbDatabase = this.result;}else if(sn=='notes'){notesDatabase = this.result;}else if(sn=='offana'){anaDatabase = this.result;}
+   //
+	  indexDbReady = new Promise((resolve, reject) => {
+  	resolve('ready');
+}); 
+  };
+}
+  
+// Helper method to get the object store that we care about.
+function getAnaStore(storeName) {
+    
+  return anaDatabase.transaction('offana', 'readwrite').objectStore(storeName);
+    
+        
+}
+
+function getNotesStore(storeName) {
+    
+  return notesDatabase.transaction('notes', 'readwrite').objectStore(storeName);
+    
+        
+}
+
+
+function getObjectStore(storeName) {
+    
+    
+  return idbDatabase.transaction('data', 'readwrite').objectStore(storeName);
+    
+        
+}
+
+
+
+function DBstore(storeName, data) {
+  getObjectStore(storeName, 'readwrite').add({
+    url: data
+  });
+}
+
+
+	
+var idbDatabase;
+var IDB_VERSION = 1;
+ //var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.OIndexedDB || window.msIndexedDB,
+    //    IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.OIDBTransaction || window.msIDBTransaction;
+
+    	initDBstore('data');
+indexDbReady = Promise.race([]);
+
+
+//end indexedDB store manager
+
 const CANVAS_WIDTH = 224
 const CANVAS_HEIGHT = 224 
 
@@ -10,7 +208,7 @@ var class_names = {}
 
 
 
-function htmlToElement(html) {
+ htmlToElement = function(html) {
     var template = document.createElement('template');
     html = html.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
@@ -69,13 +267,8 @@ function getCanvasFrame(som){
 
 }
 
-function copySvgToCavnas(){
 
-
-}
-
-
-function getVideoFrame(som){
+ getVideoFrame = function(som){
   document.querySelector('input').value='';
   if(som=='single'){
 
@@ -183,12 +376,17 @@ const y = tf.tidy(() => tf.oneHot(tf.tensor1d([label]).toInt(), 30));
     }
   }
 }
-function createTestData(shape,count){
+
+function delay(){
+	return new Promise(function(resolve,reject){setTimeout(resolve, 500)})
+}
+
+async function createTestData(shape,count){
       document.querySelector('.singleCanvas').getContext("2d").clearRect(0, 0, document.querySelector('.singleCanvas').width, document.querySelector('.singleCanvas').height);
         document.querySelector('.manyCanvas').getContext("2d").clearRect(0, 0, document.querySelector('.manyCanvas').width, document.querySelector('.manyCanvas').height);
     
   document.querySelector('.testCount').value=count;
-update(shape,count).then(function(e){
+return update(shape,count).then(function(e){
 
     // this is just a JavaScript (HTML) image
     var img = new Image();
@@ -198,7 +396,7 @@ update(shape,count).then(function(e){
     img.onload = function() {
         // after this, Canvas’ origin-clean is DIRTY
 document.querySelector('.manyCanvas').getContext("2d").drawImage(img, 0, 0);
-        update(getRandomInt(1, 2),1).then(function(e){
+      return update(shape,1).then(function(e){
 
    
     // this is just a JavaScript (HTML) image
@@ -209,7 +407,10 @@ document.querySelector('.manyCanvas').getContext("2d").drawImage(img, 0, 0);
     imgi.onload = function() {
         // after this, Canvas’ origin-clean is DIRTY
         document.querySelector('.singleCanvas').getContext("2d").drawImage(imgi, 0, 0);
-        setExampleHandler();
+        setExampleHandler().then(function(e){
+        return;	
+        });
+        
     }
     imgi.src = "data:image/svg+xml;base64," + btoa((new XMLSerializer()).serializeToString(document.querySelector('svg')));
 
@@ -225,7 +426,7 @@ img.src = "data:image/svg+xml;base64," + btoa((new XMLSerializer()).serializeToS
 }
 
 // The dataset object where we will store activations.
-let modelDataset = new ModelDataset();
+var modelDataset = new ModelDataset();
 
 let mobilenet
 let countnet
@@ -275,6 +476,14 @@ async function loadMobilenet() {
 // we'll use as input to our classifier model.
 
 async function loadCountNet() {
+	try{
+		idbModel = await tf.loadModel('indexeddb://countnet');
+		console.log('loaded model from db');
+		return idbModel;
+	}catch(err){
+
+		console.log(err+' count not load model from indexdb');
+	
   var mobilenet = await loadMobilenet();
 
   // Return a model that outputs an internal activation.
@@ -294,43 +503,55 @@ const sum = addLayer.apply([input1, input2]);
 
 const multiplyLayer = tf.layers.multiply();
 const product = multiplyLayer.apply([input1, input2]);
-
 cnet = tf.sequential({
     layers: [
       // Flattens the input to a vector so we can use it in a dense layer. While
       // technically a layer, this only performs a reshape (and has no training
       // parameters).
-      tf.layers.flatten({inputShape: [7,7,256]}),
+    
+      tf.layers.conv2d({
+      	inputShape: [7,7,256],
+  kernelSize: 5,
+  filters: 8,
+  strides: 1,
+  activation: 'softmax',
+  kernelInitializer: 'VarianceScaling'
+}),
+
+tf.layers.maxPooling2d({
+  poolSize: [2, 2],
+  strides: [2, 2]
+}), 
+     
+      tf.layers.dropout({rate:0.1}),
+      tf.layers.flatten(),
       // Layer 1
       tf.layers.dense({
-        units: 256,
-        activation: 'relu',
-        kernelInitializer: 'varianceScaling',
-        useBias: true
-      }),
-      // Layer 2. The number of units of the last layer should correspond
-      tf.layers.dense({
         units: 30,
+        activation: 'softmax',
         kernelInitializer: 'varianceScaling',
-        useBias: false,
-        activation: 'softmax'
+        useBias: false
       })
     ]
   });
 
-console.log(cnet);
+//console.log(cnet);
 
 
-clayer = cnet.getLayer("dense_Dense2");
+//clayer = cnet.getLayer("dense_Dense2");
  
 
-  return tf.model({inputs: cnet.inputs, outputs: clayer.output});
+  var countnet=tf.model({inputs: cnet.inputs, outputs: cnet.outputs})
+
+  await countnet.save('indexeddb://countnet');
+  return countnet;
+  }
 }
 
 // When the UI buttons are pressed, read a frame from the webcam and associate
 // it with the class label given by the for example, bananas, oranges are
 // labels 0, 1 respectively.
-function setExampleHandler() {
+async function setExampleHandler() {
   if(document.querySelector('.testCount').value==''){
     throw 'this sample does not have a count definition';
     return
@@ -355,7 +576,8 @@ function setExampleHandler() {
 var setdb = getObjectStore('data', 'readwrite').put(JSON.stringify(reqs), 'countNet-dataset');
             setdb.onsuccess = function () {
                 
-    console.log('sample added')
+    //console.log('sample added');
+    return 'sample added';
     //modelDataset.addExample(product, parseInt(document.querySelector('input').value));
 
             }
@@ -365,65 +587,6 @@ var setdb = getObjectStore('data', 'readwrite').put(JSON.stringify(reqs), 'count
   });
 }
 
-function sokoCustomModelInit(){
-  // Creates a 2-layer fully connected model. By creating a separate model,
-  // rather than adding layers to the mobilenet model, we "freeze" the weights
-  // of the mobilenet model, and only train weights from the new model.
-
-model = tf.sequential({
-    layers: [
-      // Flattens the input to a vector so we can use it in a dense layer. While
-      // technically a layer, this only performs a reshape (and has no training
-      // parameters).
-      tf.layers.flatten({inputShape: [7, 7, 256]}),
-      // Layer 1
-      tf.layers.dense({
-        units: 500,
-        activation: 'relu',
-        kernelInitializer: 'varianceScaling',
-        useBias: true
-      }),
-      // Layer 2. The number of units of the last layer should correspond
-       
-      tf.layers.dense({
-        units: 150,
-        activation: 'relu',
-        kernelInitializer: 'varianceScaling',
-        useBias: true
-      }),
-      // Layer 3. The number of units of the last layer should correspond
-        
-      tf.layers.dense({
-        units: 50,
-        activation: 'relu',
-        kernelInitializer: 'varianceScaling',
-        useBias: true
-      }),
-      // Layer 3. The number of units of the last layer should correspond
-      // to the number of classes we want to predict.
-      tf.layers.dense({
-        units: 8,
-        kernelInitializer: 'varianceScaling',
-        useBias: false,
-        activation: 'softmax'
-      })
-    ]
-  });
-
-
-  // Creates the optimizers which drives training of the model.
-  const optimizer = tf.train.adam(0.001);
-  // We use categoricalCrossentropy which is the loss function we use for
-  // categorical classification which measures the error between our predicted
-  // probability distribution over classes (probability that an input is of each
-  // class), versus the label (100% probability in the true class)>
-  model.compile({
-    optimizer: optimizer,
-    loss: 'categoricalCrossentropy',
-    metrics: ['accuracy'],
-  });
-
-}
 
 async function addData(){
   getObjectStore('data', 'readwrite').get('countNet-dataset').onsuccess = function (event) {
@@ -441,7 +604,7 @@ for(var i in reqs){
 
 document.querySelector('.collection').appendChild(htmlToElement('<li style="padding-left: 144px;" class="collection-item avatar">'+
       '<img src="'+reqs[i].sImg+'" alt="" class="materialboxed circle">'+
-     '<img style="margin-left: 60px;" src="'+reqs[i].mImg+'" alt="" class="materialboxed circle">'+
+     '<img style="margin-left: 60px;" src="'+reqs[i].mImg+'" alt="" class="materialboxed">'+
       '<span class="title">'+reqs[i].count+' Items</span>'+
       '<p> <br></p>'+
       '<a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>'+
@@ -456,6 +619,7 @@ var singleCtx = singleCanv.getContext("2d");
 var manyCanv = document.createElement('canvas');
 var manyCtx = manyCanv.getContext("2d");
 var cnt=reqs[i].count;
+var thNum=i;
 
   singleCanv.width = 224;
   singleCanv.height =  224;
@@ -481,7 +645,7 @@ manyCtx.drawImage(mImage, 0, 0, 224, 224);
     // console.log(img.data())
 
 var product = multiplyLayer.apply([mobilenet.predict(singleImg), mobilenet.predict(manyImg)]);
-resolve({product:product,count:parseInt(cnt)})
+resolve({product:product,count:parseInt(cnt),thNum:thNum})
   
 
 };
@@ -492,8 +656,13 @@ mImage.src = reqs[i].mImg;
 sImage.src = reqs[i].sImg;
 
     }).then(function(e){
-modelDataset.addExample(e.product, e.count);
 
+modelDataset.addExample(e.product, e.count);
+console.log(e.thNum,i)
+if(e.thNum==i){
+
+return modelDataset;
+}
 
     })
   
@@ -507,9 +676,10 @@ modelDataset.addExample(e.product, e.count);
 
       }
 
+await delay()
 }
 
-async function train() {
+train = async function() {
 
       
 
@@ -551,11 +721,15 @@ document.querySelector('.modelStats').innerHTML = '';
     const loss = history.history.loss[0];
     const accuracy = history.history.acc[0];
 
-document.querySelector('.modelStats').appendChild(document.createTextNode('loss:'+loss+' '+'acc:'+accuracy+'\n'));
+document.querySelector('.modelStats').prepend(document.createTextNode('loss:'+loss+' '+'acc:'+accuracy+'\n'));
     //console.log({'loss':loss,'acc':accuracy});
     await tf.nextFrame();
 
-  }      
+  } 
+  await countnet.save('indexeddb://countnet');
+
+  return 'trained and saved';     
+  //indexeddb://demo/management/model1
 }
 
 
@@ -565,16 +739,35 @@ var generatingTestData=false;
 setInterval(function() {
   
   if(generatingTestData) {
-   createTestData('',getRandomInt(1, 30))
+  	
+  manySamples(30).then(function(e){
+  	train().then(function(e){
+  	console.log(e);
+  })
+  })
+  
   }
-}, 2000);
+}, 15000);
 
+
+async function manySamples(num){
+	 for (var i = 0; i < num; ++i) {
+            await createTestData(getRandomInt(1, 2),getRandomInt(1, 29));
+            await delay();
+
+  		countnet = await loadCountNet();
+
+                        }
+
+}
+
+//manySamples(10)
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 async function predict() {
-  while (Predicting) {
+ // while (Predicting) {
     const predictedClass = tf.tidy(() => {
 const singleImg = new Webcam(getCanvasFrame('single')).capture();
     const manyImg = new Webcam(getCanvasFrame('many')).capture();
@@ -592,42 +785,89 @@ console.log(product)
     });
 
     const activations = (await predictedClass);
+    console.log(activations.print());
     console.log(activations.dataSync());
     activations.dispose()
     await tf.nextFrame();
-  }
+  //}
   
   
 }
+allowAutoTrain=false;
+async function autoTrain(){
+
+setInterval(function() {
+  if(allowAutoTrain){
+  	try{
+  	}catch(e){
+  		console.log('countnet model not loaded for retraining')
+  	}
+allowAutoTrain=false;
+idbDatabase.transaction(["data"], "readwrite").objectStore("data").clear()
+try{
+	// The dataset object where we will store activations.
+modelDataset = new ModelDataset();
+
+}catch(e){
+	console.log(e)
+}
+  manySamples(50).then(function(e){
+addData().then(function(e){
+  	console.log(e);
+  	train().then(function(e){
+  	console.log(e);
+
+allowAutoTrain=true;
+  })
+  });
+  })
+}
+}, 5000);
+
+  
+}
+autoTrain();
 
 
 async function init() {
 countnet =  await loadCountNet();
 mobilenet =  await loadMobilenet();
-addData().then(function(r){
-
-setInterval(function() {
-  
+datasetManager();
 
 var elems = document.querySelectorAll('.materialboxed');
     var instances = M.Materialbox.init(elems, {});
-}, 2000);
-   // startWebcam(document.querySelector('video'));
-})
+/*
+  manySamples(10).then(function(e){
+addData().then(function(e){
+	
+  	console.log(e);
+
+var elems = document.querySelectorAll('.materialboxed');
+    var instances = M.Materialbox.init(elems, {});
+
+  	train().then(function(e){
+  	console.log(e);
+  })
+  });
+  })
+  */
 }
-init()
+setTimeout(function() {
+  init()
+}, 1000);
+
 
 var tabsInstance = M.Tabs.init(document.querySelector('.tabs'), {});
   
 
 //toggle test data generation  
-document.querySelector(".testDataGen>label>input").addEventListener("click", function(e){
+document.querySelector(".autoTrain>label>input").addEventListener("click", function(e){
 if(generatingTestData){
-generatingTestData=false;
+allowAutoTrain=false;
 addData()
 }else{
 
 
-generatingTestData=true;
+allowAutoTrain=true;
 }
 });
