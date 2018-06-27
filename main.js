@@ -353,7 +353,7 @@ function getCanvasFrame(som){
  console.log(example, label) 
     // One-hot encode the label.
     
-const y = tf.tidy(() => tf.oneHot(tf.tensor1d([label]).toInt(), 30));
+const y = tf.tidy(() => tf.oneHot(tf.tensor1d([label]).toInt(), 10));
 
 
     if (this.xs == null) {
@@ -378,7 +378,7 @@ const y = tf.tidy(() => tf.oneHot(tf.tensor1d([label]).toInt(), 30));
 }
 
 function delay(){
-	return new Promise(function(resolve,reject){setTimeout(resolve, 500)})
+	return new Promise(function(resolve,reject){setTimeout(resolve, 350)})
 }
 
 async function createTestData(shape,count){
@@ -503,34 +503,37 @@ const sum = addLayer.apply([input1, input2]);
 
 const multiplyLayer = tf.layers.multiply();
 const product = multiplyLayer.apply([input1, input2]);
-cnet = tf.sequential({
+const cnet = tf.sequential({
     layers: [
       // Flattens the input to a vector so we can use it in a dense layer. While
       // technically a layer, this only performs a reshape (and has no training
       // parameters).
     
-      tf.layers.conv2d({
-      	inputShape: [7,7,256],
-  kernelSize: 5,
-  filters: 8,
-  strides: 1,
-  activation: 'softmax',
-  kernelInitializer: 'VarianceScaling'
-}),
-
-tf.layers.maxPooling2d({
-  poolSize: [2, 2],
-  strides: [2, 2]
-}), 
-     
-      tf.layers.dropout({rate:0.1}),
-      tf.layers.flatten(),
-      // Layer 1
-      tf.layers.dense({
+   //   tf.layers.flatten({inputShape: [7,7,256]}),
+//tf.layers.lstm({units: 5, returnSequences: true}),
+//tf.layers.dropout({rate: 0.01}),
+//tf.layers.simpleRNN({units: 2, returnSequences: true,inputShape: [1,7,7,256]}),
+    // 
+    //  tf.layers.flatten({inputShape: [12544,2]}),
+    tf.layers.dense({inputShape: [12544,2],
+        units: 75,
+        activation: 'relu',
+        kernelInitializer: 'varianceScaling',
+        useBias: true
+      }),
+      
+       tf.layers.flatten(),
+     tf.layers.dense({
         units: 30,
+        activation: 'relu',
+        kernelInitializer: 'varianceScaling',
+        useBias: true
+      }),
+     tf.layers.dense({
+        units: 10,
         activation: 'softmax',
         kernelInitializer: 'varianceScaling',
-        useBias: false
+        useBias: true
       })
     ]
   });
@@ -543,7 +546,7 @@ tf.layers.maxPooling2d({
 
   var countnet=tf.model({inputs: cnet.inputs, outputs: cnet.outputs})
 
-  await countnet.save('indexeddb://countnet');
+  //await countnet.save('indexeddb://countnet');
   return countnet;
   }
 }
@@ -643,8 +646,9 @@ manyCtx.drawImage(mImage, 0, 0, 224, 224);
     var singleImg = new Webcam(singleCanv).capture();
     var manyImg = new Webcam(manyCanv).capture();
     // console.log(img.data())
-
-var product = multiplyLayer.apply([mobilenet.predict(singleImg), mobilenet.predict(manyImg)]);
+    
+var product = tf.stack([mobilenet.predict(singleImg).reshape([1,12544]), mobilenet.predict(manyImg).reshape([1,12544])], 2);
+//var product = mobilenet.predict(singleImg).squaredDifference(mobilenet.predict(manyImg));
 resolve({product:product,count:parseInt(cnt),thNum:thNum})
   
 
@@ -678,10 +682,10 @@ return modelDataset;
 
 await delay()
 }
-
+trainingRun=0;
 train = async function() {
 
-      
+  ++trainingRun;    
 
   if (modelDataset.xs == null) {
     throw new Error('Add some examples before training!');
@@ -715,14 +719,22 @@ train = async function() {
   // Train the model! Model.fit() will shuffle xs & ys so we don't have to.
 
   console.log(Math.floor(modelDataset.xs.shape[0] * 1))
-document.querySelector('.modelStats').innerHTML = '';
+//document.querySelector('.modelStats').innerHTML = '';
   for (let i = 0; i < 100; i++) {
     const history = await countnet.fit(modelDataset.xs, modelDataset.ys, {batchSize: batchSize,epochs: 1});
     const loss = history.history.loss[0];
     const accuracy = history.history.acc[0];
 
-document.querySelector('.modelStats').prepend(document.createTextNode('loss:'+loss+' '+'acc:'+accuracy+'\n'));
-    //console.log({'loss':loss,'acc':accuracy});
+    if(i==0){
+document.querySelector('.modelStats').prepend(document.createTextNode('trainCount:'+trainingRun+' '+'epoch:'+i+' '+'loss:'+loss+' '+'acc:'+accuracy+'</br>'));
+ 
+
+    }else if(i==99){
+ document.querySelector('.modelStats').prepend(document.createTextNode('trainCount:'+trainingRun+' '+'epoch:'+i+' '+'loss:'+loss+' '+'acc:'+accuracy+'</br>'));
+   	
+    }
+
+   //console.log({'loss':loss,'acc':accuracy});
     await tf.nextFrame();
 
   } 
@@ -752,10 +764,9 @@ setInterval(function() {
 
 async function manySamples(num){
 	 for (var i = 0; i < num; ++i) {
-            await createTestData(getRandomInt(1, 2),getRandomInt(1, 29));
+            await createTestData(getRandomInt(1, 2),getRandomInt(1, 9));
             await delay();
 
-  		countnet = await loadCountNet();
 
                         }
 
@@ -774,7 +785,10 @@ const singleImg = new Webcam(getCanvasFrame('single')).capture();
     // console.log(img.data())
 
 const multiplyLayer = tf.layers.multiply();
-const product = multiplyLayer.apply([mobilenet.predict(singleImg), mobilenet.predict(manyImg)]);
+
+//var product = tf.concat([mobilenet.predict(singleImg), mobilenet.predict(manyImg)], 0);
+var product = mobilenet.predict(singleImg).squaredDifference(mobilenet.predict(manyImg));
+//const product = multiplyLayer.apply([mobilenet.predict(singleImg), mobilenet.predict(manyImg)]);
 console.log(product)
       
       // Make a prediction through our newly-trained model using the activation
@@ -811,7 +825,7 @@ modelDataset = new ModelDataset();
 }catch(e){
 	console.log(e)
 }
-  manySamples(50).then(function(e){
+  manySamples(4).then(function(e){
 addData().then(function(e){
   	console.log(e);
   	train().then(function(e){
